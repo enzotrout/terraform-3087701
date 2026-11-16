@@ -1,22 +1,16 @@
-data "aws_ami" "app_ami" {
-  most_recent = true
-
-  filter {
-    name   = "name"
-    values = ["bitnami-tomcat-*-x86_64-hvm-ebs-nami"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  owners = ["979382823631"] # Bitnami
+# AWS publishes the current Amazon Linux 2023 AMI ID through SSM in each Region.
+# This replaces the discontinued Bitnami Tomcat AMI lookup.
+data "aws_ssm_parameter" "app_ami" {
+  name = "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
 }
 
 resource "aws_instance" "web" {
-  ami           = data.aws_ami.app_ami.id
-  instance_type = "t3.nano"
+  ami           = data.aws_ssm_parameter.app_ami.value
+  instance_type = var.instance_type
+
+  metadata_options {
+    http_tokens = "required"
+  }
 
   tags = {
     Name = "HelloWorld"
